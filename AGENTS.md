@@ -174,7 +174,7 @@ When the user requests a durable behavior change, record it here or in the relev
 - Run `npm run test:docker-init` for parallel Docker startup scripts and failure isolation. With Tini on PATH, also verify continuous hooks alongside the framework, clean/crash restarts and shutdown through the production entrypoint without a Docker engine.
 
 
-Distribution verification: run `npm run test:installer`, `npm run test:updates`, `go test ./internal/update`, `python3 tests/setup.py` as root (see tests/AGENTS.md for the versioned server fixture), and `python3 .github/release-notes.py --self-test`. The update browser suite starts an isolated server and restores user settings. Use actionlint for `.github/workflows/release.yml`; actual Docker/registry publication requires CI.
+Distribution verification: run `npm run test:installer`, `npm run test:updates`, `go test ./internal/update`, `python3 tests/setup.py` as root (see tests/AGENTS.md for the versioned server fixture), and `python3 .github/release-notes.py --self-test`. The update browser suite starts an isolated server and restores user settings.
 
 Report verification against the tested commit and environment, including skips. Use the actual Actions run for release/publication evidence. Local fixtures do not establish live systemd behavior, public Internet ACME validation, physical-device behavior or production readiness. Workspace-specific facilities belong in inherited workspace instructions.
 
