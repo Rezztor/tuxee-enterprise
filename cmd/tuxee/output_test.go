@@ -84,11 +84,8 @@ func TestUpdateConsole(t *testing.T) {
 		tty, match bool
 		failed     bool
 	}{
-		{"success", "Successfully updated Tuxee to v0.0.1.", true, true, false},
-		{"success", "Successfully updated Tuxee to v0.0.1.", false, false, false},
-		{"current", "Tuxee is up to date; installation unchanged.", true, true, false},
-		{"failure", "Update failed: GitHub download returned HTTP 503", true, true, true},
-		{"checksum", "Update failed:", false, true, true},
+		{"disabled", "Update failed: self-update is disabled", true, true, true},
+		{"disabled", "Update failed: self-update is disabled", false, false, true},
 	} {
 		t.Run(fmt.Sprintf("%s/tty=%t/match=%t", tc.mode, tc.tty, tc.match), func(t *testing.T) {
 			dir := t.TempDir()

@@ -16,7 +16,6 @@ import (
 	"testing/fstest"
 	"time"
 
-	"golang.org/x/sys/unix"
 	"tuxee/internal/identity"
 	"tuxee/internal/update"
 )
@@ -156,155 +155,16 @@ func TestUpdateChecksRequireSessionAndCSRF(t *testing.T) {
 	s.updateApplying.Store(false)
 }
 
-func TestUpdateApplyUsesUserPermissionsAndVerifiedInstaller(t *testing.T) {
-	if os.Geteuid() != 0 {
-		t.Skip("credential checks require root")
+func TestUpdateApplyIsDisabled(t *testing.T) {
+	s, target := updateServer(t, identity.User{UID: uint32(os.Getuid()), GID: uint32(os.Getgid())}, updateFixture{})
+	before, _ := os.ReadFile(target)
+	w := updateRequest(s, "POST", "/api/update/apply", true, true, "")
+	if w.Code != 500 || !strings.Contains(w.Body.String(), update.ErrDisabled.Error()) {
+		t.Fatal(w.Code, w.Body)
 	}
-	for _, mode := range []string{"root", "owner", "group", "denied", "lock-denied", "lock-symlink", "sticky", "permission-revoked", "checksum", "locked", "current"} {
-		t.Run(mode, func(t *testing.T) {
-			user := identity.User{UID: 60001, GID: 60001}
-			if mode == "root" || mode == "checksum" || mode == "locked" || mode == "current" || mode == "permission-revoked" {
-				user.UID = 0
-				user.GID = 0
-			}
-			fixture := updateFixture{Failure: mode == "checksum"}
-			if mode == "current" {
-				fixture.Latest = "v1.0.0"
-			}
-			if mode == "group" {
-				user.Groups = []uint32{60002}
-			}
-			s, target := updateServer(t, user, fixture)
-			dir := filepath.Dir(target)
-			permitted := user.UID == 0
-			calls := 0
-			s.Restart = func() { calls++ }
-			switch mode {
-			case "owner", "permission-revoked":
-				if err := os.Chown(dir, 60001, 60001); err != nil {
-					t.Fatal(err)
-				}
-			case "group":
-				if err := os.Chown(dir, 0, 60002); err != nil {
-					t.Fatal(err)
-				}
-				if err := os.Chmod(dir, 0770); err != nil {
-					t.Fatal(err)
-				}
-			case "lock-denied", "lock-symlink", "sticky":
-				if err := os.Chmod(dir, 0777); err != nil {
-					t.Fatal(err)
-				}
-				if mode == "sticky" {
-					if err := os.Chmod(dir, os.ModeSticky|0777); err != nil {
-						t.Fatal(err)
-					}
-				}
-				if mode == "lock-denied" {
-					if err := os.WriteFile(filepath.Join(dir, ".tuxee-update.lock"), nil, 0600); err != nil {
-						t.Fatal(err)
-					}
-				}
-				if mode == "lock-symlink" {
-					if err := os.Symlink(target, filepath.Join(dir, ".tuxee-update.lock")); err != nil {
-						t.Fatal(err)
-					}
-				}
-			}
-			w := updateRequest(s, "GET", "/api/update", true, false, "")
-			var status struct{ CanApply, RestartNeeded, Available bool }
-			if err := json.Unmarshal(w.Body.Bytes(), &status); err != nil || w.Code != 200 || status.CanApply != permitted {
-				t.Fatal("probe", w.Code, w.Body, err)
-			}
-			if mode == "permission-revoked" {
-				if err := os.Chmod(target, 0644); err != nil {
-					t.Fatal(err)
-				}
-				permitted = false
-			}
-			if mode == "locked" {
-				lock, err := update.LockDirectory(dir)
-				if err != nil {
-					t.Fatal(err)
-				}
-				defer lock.Close()
-			}
-			before, _ := os.ReadFile(target)
-			w = updateRequest(s, "POST", "/api/update/apply", true, true, "")
-			want := 202
-			if !permitted {
-				want = 403
-			} else if mode == "checksum" || mode == "locked" {
-				want = 500
-			}
-			if w.Code != want {
-				t.Fatal(want, w.Code, w.Body)
-			}
-			after, _ := os.ReadFile(target)
-			changed := want == 202 && mode != "current"
-			if (string(before) != string(after)) != changed {
-				t.Fatal("wrong replacement outcome")
-			}
-			if (calls == 1) != (want == 202) || s.closed.Load() != (want == 202) {
-				t.Fatal("wrong restart outcome", calls, s.closed.Load())
-			}
-			s.closed.Store(false) // Inspect the installation without re-exec in this unit fixture.
-			w = updateRequest(s, "GET", "/api/update", true, false, "")
-			if err := json.Unmarshal(w.Body.Bytes(), &status); err != nil || status.RestartNeeded != changed {
-				t.Fatal("installed status", w.Body, err)
-			}
-			if changed {
-				if s.Updates.Status().Latest != "v1.1.0" || status.Available {
-					t.Fatal("stale release after update", s.Updates.Status(), status)
-				}
-				info, err := os.Stat(target)
-				if err != nil || info.Mode().Perm() != 0755 {
-					t.Fatal(info, err)
-				}
-				var stat unix.Stat_t
-				if err := unix.Stat(target, &stat); err != nil || stat.Uid != user.UID {
-					t.Fatal("replacement credentials", stat.Uid, err)
-				}
-			}
-		})
-	}
-}
-
-func TestUpdateCancellationPreservesExecutable(t *testing.T) {
-	s, target := updateServer(t, identity.User{UID: uint32(os.Getuid()), GID: uint32(os.Getgid())}, updateFixture{Slow: true})
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	r := httptest.NewRequest("POST", "http://tuxee.test/api/update/apply", nil).WithContext(ctx)
-	r.AddCookie(&http.Cookie{Name: s.cookieName, Value: "token"})
-	r.Header.Set("X-Tuxee-CSRF", "csrf")
-	done := make(chan struct{})
-	go func() { defer close(done); s.ServeHTTP(httptest.NewRecorder(), r) }()
-	deadline := time.Now().Add(10 * time.Second)
-	for {
-		if _, err := os.Stat(filepath.Join(filepath.Dir(target), "downloading")); err == nil {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("download did not start")
-		}
-		time.Sleep(10 * time.Millisecond)
-	}
-	if w := updateRequest(s, "POST", "/api/update/apply", true, true, ""); w.Code != 409 {
-		t.Fatal("concurrent update", w.Code, w.Body)
-	}
-	cancel()
-	select {
-	case <-done:
-	case <-time.After(5 * time.Second):
-		t.Fatal("cancellation did not stop worker")
-	}
-	version, err := update.InstalledVersion(context.Background(), target)
-	if err != nil || version != "1.0.0" {
-		t.Fatal(version, err)
-	}
-	stages, _ := filepath.Glob(filepath.Join(filepath.Dir(target), ".tuxee-stage-*"))
-	if len(stages) != 0 || s.updateApplying.Load() || s.closed.Load() {
-		t.Fatal("cancellation left work behind", stages)
+	after, _ := os.ReadFile(target)
+	if string(before) != string(after) || s.closed.Load() {
+		t.Fatal("disabled update changed installation or restarted")
 	}
 }
 

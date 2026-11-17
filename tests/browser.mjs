@@ -741,7 +741,7 @@ try {
     check('color marker previews, resets, cancels, persists per user and restores standard borders in both themes');
     check('favicon hexagon follows marker changes without cached colors, preserves the penguin/transparency and resets across logout/accounts');
     check('parallel uploads defaults to four, discards unsaved edits and persists per user across reload/login');
-    // Crowded tabs use the same UUI fitting rule on desktop and mobile.
+    // Crowded tabs use the same fitting rule on desktop and mobile.
     await page.waitForTimeout(300);
     const savedSettings = (await (await api('/me')).json()).settings;
     const crowded = structuredClone(savedSettings);

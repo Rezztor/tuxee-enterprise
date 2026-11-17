@@ -6,6 +6,9 @@
 
 # Tuxee - the most convenient Linux for servers and agents.
 
+> **Rezztor enterprise fork** of [agent0ai/tuxee](https://github.com/agent0ai/tuxee) (MIT). Self-update is disabled:
+> upgrade by replacing the image or binary.
+
 A tiny Debian Linux container with a superb web interface for files and <b>(persistent!)</b>
 terminals. Also available as a standalone web interface for existing Linux servers.
 

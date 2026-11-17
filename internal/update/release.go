@@ -3,6 +3,7 @@ package update
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"regexp"
@@ -43,7 +44,7 @@ func NewClient() *Client {
 			}
 			return nil
 		}},
-		latestURL:    "https://api.github.com/repos/agent0ai/tuxee/releases/latest",
+		// Rezztor: no latestURL, so Latest returns ErrDisabled and nothing is fetched.
 		downloadBase: Repository + "/releases/download/",
 	}
 }
@@ -75,7 +76,13 @@ func (c *Client) download(ctx context.Context, url string, out io.Writer, limit 
 	return nil
 }
 
+// ErrDisabled stops every update path (daily check, browser, CLI, worker) before any network request.
+var ErrDisabled = errors.New("self-update is disabled in this build; install new versions by replacing the image or binary")
+
 func (c *Client) Latest(ctx context.Context) (Release, error) {
+	if c.latestURL == "" {
+		return Release{}, ErrDisabled
+	}
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	var data strings.Builder
