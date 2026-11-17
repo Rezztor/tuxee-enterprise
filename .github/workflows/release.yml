@@ -1,0 +1,44 @@
+name: Release
+
+# Push a vMAJOR.MINOR.PATCH tag to publish tuxee-linux-amd64 and checksums.txt, which install.sh downloads.
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tuxee-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # Rezztor's self-hosted runner (needs build-essential, libpam0g-dev, musl-tools and gh).
+    runs-on: [self-hosted, linux, x64]
+    env:
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Build frontend and guardian
+        run: |
+          npm ci
+          npm run build
+          make -C internal/keeper/native
+      - name: Test
+        run: go test ./internal/update ./internal/server ./cmd/tuxee
+      - name: Build
+        run: |
+          mkdir -p release
+          CGO_ENABLED=1 go build -trimpath -ldflags="-s -w -X main.version=${TAG#v}" -o release/tuxee-linux-amd64 ./cmd/tuxee
+          test "$(release/tuxee-linux-amd64 version)" = "Tuxee ${TAG#v}"
+          (cd release && sha256sum tuxee-linux-amd64 > checksums.txt)
+      - name: Publish
+        run: gh release create "$TAG" release/* --title "Tuxee Enterprise $TAG" --generate-notes --verify-tag

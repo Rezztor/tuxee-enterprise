@@ -14,7 +14,7 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-const Repository = "https://github.com/agent0ai/tuxee"
+const Repository = "https://github.com/Rezztor/tuxee-enterprise"
 
 var stableTag = regexp.MustCompile(`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)
 

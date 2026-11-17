@@ -1,6 +1,6 @@
 #!/bin/sh
-# Install or update Tuxee; the installed version need not support updates.
-# curl -fsSL https://tuxee.agent-zero.ai/install.sh | sudo sh -s -- [v1.2.3]
+# Install or update Tuxee Enterprise; the installed version need not support updates.
+# curl -fsSL https://tuxee-enterprise.rezztor.com/install.sh | sudo sh -s -- [v1.2.3]
 set -eu
 
 main() {
@@ -15,10 +15,10 @@ main() {
     esac
     [ "$(id -u)" = 0 ] || { echo 'Run with sudo sh, or as root.' >&2; exit 1; }
     [ "$(uname -s)" = Linux ] || { echo 'Tuxee requires Linux.' >&2; exit 1; }
+    # shortcut: releases are built for x86-64 only; add arm64 here when the release workflow builds it.
     case "$(uname -m)" in
         x86_64|amd64) arch=amd64 ;;
-        aarch64|arm64) arch=arm64 ;;
-        *) echo 'Supported architectures: x86-64 and ARM64.' >&2; exit 1 ;;
+        *) echo 'Supported architecture: x86-64.' >&2; exit 1 ;;
     esac
     for tool in curl sha256sum mktemp awk; do
         command -v "$tool" >/dev/null 2>&1 || { echo "Required command missing: $tool" >&2; exit 1; }
@@ -29,13 +29,13 @@ main() {
     tag=${1:-}
     if [ -z "$tag" ]; then
         latest=$(curl -fsSL --proto '=https' --proto-redir '=https' --connect-timeout 10 --max-time 30 --max-redirs 5 \
-            -o /dev/null -w '%{url_effective}' https://github.com/agent0ai/tuxee/releases/latest)
+            -o /dev/null -w '%{url_effective}' https://github.com/Rezztor/tuxee-enterprise/releases/latest)
         tag=${latest##*/}
     fi
     tag=v${tag#v}
     printf '%s\n' "$tag" | awk '/^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/ { ok=1 } END { exit !ok }' ||
         { echo 'Expected a stable version such as v1.2.3.' >&2; exit 1; }
-    base=https://github.com/agent0ai/tuxee/releases/download/$tag
+    base=https://github.com/Rezztor/tuxee-enterprise/releases/download/$tag
     name=tuxee-linux-$arch
     echo "Downloading Tuxee $tag for Linux/$arch..."
     download "$base/checksums.txt" "$stage/checksums.txt" 1048576

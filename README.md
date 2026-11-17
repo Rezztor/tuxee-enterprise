@@ -96,23 +96,13 @@ terminals. Also available as a standalone web interface for existing Linux serve
 
 ## Quick start
 
-**Recommended: run the tiny Docker image with zero configuration.**
+**Install on your own Linux server (x86-64):**
 
 ```sh
-docker run -p 80:80 -p 443:443 -e ROOT_PASSWORD='your-password' agent0ai/tuxee
+curl -fsSL https://tuxee-enterprise.rezztor.com/install.sh | sudo sh
 ```
 
-The app is available on HTTP 80 and HTTPS 443. Behind Traefik or another HTTPS
-proxy, forward to container port **80**—no Tuxee configuration is needed.
-See [Docker setup](docs/guide.md#docker) for persistence and alternate host ports.
-
-You can use `ROOT_PASSWORD_FILE` instead of `ROOT_PASSWORD` to provide file path instead of plain value for the default password.
-
-**Or install directly on an existing Linux server:**
-
-```sh
-curl -fsSL https://tuxee.agent-zero.ai/install.sh | sudo sh
-```
+Rezztor ships Tuxee Enterprise for your own operating system, not as a container image.
 
 [Manual installation and building from source](docs/install.md)
 

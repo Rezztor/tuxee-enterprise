@@ -16,8 +16,8 @@ await writeFile(join(tools, 'id'), '#!/bin/sh\necho 0\n', { mode: 0o755 });
 await writeFile(join(tools, 'uname'), '#!/bin/sh\nif [ "$1" = -s ]; then echo Linux; else echo "${TEST_ARCH:-x86_64}"; fi\n', { mode: 0o755 });
 await writeFile(join(tools, 'curl'), `#!${process.execPath}
 const fs=require('fs'), args=process.argv.slice(2), url=args.at(-1), target=args[args.indexOf('-o')+1], root=process.env.FIXTURES;
-if(url==='https://github.com/agent0ai/tuxee/releases/latest'){process.stdout.write('https://github.com/agent0ai/tuxee/releases/tag/v1.2.3');process.exit(0);}
-if(!url.startsWith('https://github.com/agent0ai/tuxee/releases/download/v1.2.3/'))process.exit(22);
+if(url==='https://github.com/Rezztor/tuxee-enterprise/releases/latest'){process.stdout.write('https://github.com/Rezztor/tuxee-enterprise/releases/tag/v1.2.3');process.exit(0);}
+if(!url.startsWith('https://github.com/Rezztor/tuxee-enterprise/releases/download/v1.2.3/'))process.exit(22);
 if(process.env.FAIL_DOWNLOAD==='yes')process.exit(22);
 fs.copyFileSync(root+(url.endsWith('checksums.txt')?'/checksums.txt':'/binary'),target);
 `, { mode: 0o755 });
@@ -38,7 +38,7 @@ async function run(args = [], extra = {}, good = true, previous = null) {
 }
 try {
     await writeFile(join(root, 'checksums.txt'), `${sum}  tuxee-linux-amd64\n${sum}  tuxee-linux-arm64\n`);
-    await run(); await run(['v1.2.3']); await run(['1.2.3'], { TEST_ARCH: 'aarch64' });
+    await run(); await run(['v1.2.3']); await run(['1.2.3'], { TEST_ARCH: 'aarch64' }, false, 'installed');
     // Old installations need neither update nor __install: only the download runs.
     await writeFile(join(tools, 'tuxee'), '#!/bin/sh\nprintf called > "$FIXTURES/legacy-called"\nexit 99\n', { mode: 0o755 });
     await run([], {}, true, 'old installation');
@@ -54,5 +54,5 @@ try {
     // A truncated piped script must not start installation.
     const truncated = spawnSync('/bin/sh', { input: script.slice(0, script.indexOf('main "$@"')), encoding: 'utf8', env: { ...process.env, PATH: `${tools}:${process.env.PATH}` } });
     assert.equal(truncated.status, 0);
-    console.log('PASS installer: fresh install, legacy upgrade, repeat install, latest/pinned versions, both architectures, checksum/download failures, cleanup and truncated input');
+    console.log('PASS installer: fresh install, legacy upgrade, repeat install, latest/pinned versions, x86-64 only, checksum/download failures, cleanup and truncated input');
 } finally { await rm(root, { recursive: true, force: true }); }

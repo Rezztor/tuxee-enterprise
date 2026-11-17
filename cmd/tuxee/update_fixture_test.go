@@ -31,9 +31,9 @@ func browserUpdateFixture() error {
 		switch r.URL.String() {
 		case "https://api.github.com/repos/agent0ai/tuxee/releases/latest":
 			body = []byte(`{"tag_name":"v1.1.0"}`)
-		case "https://github.com/agent0ai/tuxee/releases/download/v1.1.0/checksums.txt":
+		case "https://github.com/Rezztor/tuxee-enterprise/releases/download/v1.1.0/checksums.txt":
 			body = fmt.Appendf(nil, "%x  tuxee-linux-%s\n", sha256.Sum256(binary), runtime.GOARCH)
-		case "https://github.com/agent0ai/tuxee/releases/download/v1.1.0/tuxee-linux-" + runtime.GOARCH:
+		case "https://github.com/Rezztor/tuxee-enterprise/releases/download/v1.1.0/tuxee-linux-" + runtime.GOARCH:
 			body = binary
 		default:
 			return nil, fmt.Errorf("unexpected fixture request: %s", r.URL)

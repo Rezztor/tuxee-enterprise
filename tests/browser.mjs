@@ -126,7 +126,7 @@ async function checkAbout(source, screenshot) {
     assert.equal(info.version, run('./bin/tuxee', ['version']).replace(/^Tuxee /, ''));
     assert.equal(info.username, a.name); assert.equal(info.uid, a.uid); assert.equal(info.home, a.home);
     assert.deepEqual(await dialog.locator('tr:not(.about-update)').evaluateAll(rows => rows.map(row => [...row.children].map(cell => cell.textContent))), [
-        ['GitHub', 'agent0ai/tuxee'],
+        ['GitHub', 'Rezztor/tuxee-enterprise'],
         ['Tuxee version', info.version], ['Operating system', info.os], ['Kernel', info.kernel],
         ['Architecture', info.architecture], ['Server name', info.hostname],
         ['User', `${a.name} (UID ${a.uid})`], ['Home directory', a.home], ['Shell', info.shell],

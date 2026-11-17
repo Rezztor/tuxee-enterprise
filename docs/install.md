@@ -10,13 +10,13 @@ to run them. For the container, see [Docker setup](guide.md#docker).
 Install or update to the latest stable release:
 
 ```sh
-curl -fsSL https://tuxee.agent-zero.ai/install.sh | sudo sh
+curl -fsSL https://tuxee-enterprise.rezztor.com/install.sh | sudo sh
 ```
 
 Or select a version:
 
 ```sh
-curl -fsSL https://tuxee.agent-zero.ai/install.sh | sudo sh -s -- v1.2.3
+curl -fsSL https://tuxee-enterprise.rezztor.com/install.sh | sudo sh -s -- v1.2.3
 ```
 
 Omit `sudo` when already root. The installer needs curl and sha256sum.
@@ -54,7 +54,7 @@ copies are separate installations; the installer updates only the default instal
 ## Manual binary installation
 
 Download the binary and checksum from the same
-[GitHub release](https://github.com/agent0ai/tuxee/releases). These commands
+[GitHub release](https://github.com/Rezztor/tuxee-enterprise/releases). These commands
 select the latest release; replace the `tag=...` line with `tag=v1.2.3` to choose
 a specific version.
 
@@ -63,15 +63,14 @@ a specific version.
     set -eu
     case "$(uname -m)" in
         x86_64|amd64) arch=amd64 ;;
-        aarch64|arm64) arch=arm64 ;;
-        *) echo "Supported architectures: x86-64 and ARM64." >&2; exit 1 ;;
+        *) echo "Supported architecture: x86-64." >&2; exit 1 ;;
     esac
     release=$(curl -fsSL --proto '=https' --proto-redir '=https' \
         --connect-timeout 10 --max-time 30 -o /dev/null -w '%{url_effective}' \
-        https://github.com/agent0ai/tuxee/releases/latest)
+        https://github.com/Rezztor/tuxee-enterprise/releases/latest)
     tag=${release##*/}
     asset=tuxee-linux-$arch
-    base=https://github.com/agent0ai/tuxee/releases/download/$tag
+    base=https://github.com/Rezztor/tuxee-enterprise/releases/download/$tag
     stage=$(mktemp -d)
     trap 'rm -rf "$stage"' EXIT
     cd "$stage"
