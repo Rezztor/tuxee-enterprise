@@ -1388,8 +1388,8 @@ async function openAbout() {
     const versionRow = el('tr'), versionHeading = el('th', '', t("app.tuxeeVersion")), version = el('td', '', '—');
     versionHeading.scope = 'row'; versionRow.append(versionHeading, version); body.append(versionRow);
     const githubRow = el('tr'), githubHeading = el('th', '', t("app.github")), githubCell = el('td');
-    const github = el('a', '', 'agent0ai/tuxee');
-    github.dir = 'ltr'; github.href = 'https://github.com/agent0ai/tuxee'; github.target = '_blank'; github.rel = 'noopener noreferrer';
+    const github = el('a', '', 'Rezztor/tuxee-enterprise');
+    github.dir = 'ltr'; github.href = 'https://github.com/Rezztor/tuxee-enterprise'; github.target = '_blank'; github.rel = 'noopener noreferrer';
     githubHeading.scope = 'row'; githubCell.append(github); githubRow.append(githubHeading, githubCell);
     table.append(body);
     content.append(logo, el('p', 'about-tagline muted', t("app.tagline")), table, status);
