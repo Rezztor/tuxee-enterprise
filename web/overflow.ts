@@ -1,31 +1,13 @@
 import { t } from './i18n';
 import { button, el, popover } from './ui';
-// Width fitting reused from the8020/uui responsive_header.ts.
-export function fittingHeaderItemCount(
-  itemWidths: readonly number[],
-  availableWidth: number,
-  overflowToggleWidth: number,
-  gap: number,
-): number {
-  if (itemWidths.length === 0 || availableWidth <= 0) return 0;
-  const allItemsWidth = itemWidths.reduce((total, width) => total + width, 0) +
-    gap * Math.max(0, itemWidths.length - 1);
-  if (allItemsWidth <= availableWidth) return itemWidths.length;
-  const visibleWidth = Math.max(
-    0,
-    availableWidth - overflowToggleWidth - gap,
-  );
-  let used = 0;
-  let visible = 0;
-  for (const width of itemWidths) {
-    const next = used + (visible === 0 ? 0 : gap) + width;
-    if (next > visibleWidth) break;
-    used = next;
-    visible++;
-  }
-  return visible;
+// How many leading items fit in `available` px. If not all fit, room is kept for the overflow button.
+export function fittingHeaderItemCount(widths: number[], available: number, moreWidth: number, gap: number): number {
+    const total = widths.reduce((sum, width) => sum + width, 0) + gap * Math.max(widths.length - 1, 0);
+    if (total <= available) return widths.length;
+    let count = 0, used = moreWidth;
+    while (count < widths.length && used + widths[count] + gap <= available) used += widths[count++] + gap;
+    return count;
 }
-
 
 export function overflowTabs(host: HTMLElement, items: HTMLElement[], label: string, reorder?: (items: HTMLElement[]) => void) {
     const visible = el('div', 'visible-tabs'), menu = el('div', 'overflow-tabs');
